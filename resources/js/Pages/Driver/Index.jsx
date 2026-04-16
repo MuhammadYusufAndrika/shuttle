@@ -108,8 +108,16 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
             preserveScroll: true,
             onSuccess: () => {
                 const req = queue.find((r) => r?.id === id);
-                setActiveRequest(req || null);
-                setQueue([]);
+                if (req) {
+                    setActiveRequest({
+                        ...req,
+                        status: 'on_the_way',
+                        user: req.user || { name: req.user_name },
+                        location: req.location || { name: req.location_name, name_en: req.location_en },
+                    });
+                }
+                setDriverStatus((prev) => ({ ...prev, status: 'busy' }));
+                setQueue((prev) => prev.filter((r) => r.id !== id));
             },
         });
     };

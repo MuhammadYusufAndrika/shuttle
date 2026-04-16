@@ -55,8 +55,9 @@ class ShuttleRequestService
 
             $req->update([
                 'driver_id'              => $driver->id,
-                'status'                 => ShuttleRequest::STATUS_ACCEPTED,
+                'status'                 => ShuttleRequest::STATUS_ON_THE_WAY,
                 'accepted_at'            => now(),
+                'on_the_way_at'          => now(),
                 'response_time_seconds'  => $responseTimeSeconds,
             ]);
 
@@ -67,6 +68,7 @@ class ShuttleRequestService
             );
 
             ActivityLog::record('request.accepted', $req, ['driver_id' => $driver->id]);
+            ActivityLog::record('request.on_the_way', $req);
             broadcast(new RequestStatusUpdated($req->fresh()))->toOthers();
 
             return $req;

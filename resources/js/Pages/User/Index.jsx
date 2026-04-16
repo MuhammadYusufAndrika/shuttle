@@ -30,6 +30,12 @@ export default function UserIndex({ locations, activeRequest: initialActive, rec
         notes: '',
     });
 
+    // Keep local state in sync with latest Inertia props.
+    useEffect(() => {
+        setActiveRequest(initialActive || null);
+        setShowForm(!initialActive);
+    }, [initialActive?.id, initialActive?.status]);
+
     // Real-time listen to own request updates
     useEffect(() => {
         if (!activeRequest) return;
