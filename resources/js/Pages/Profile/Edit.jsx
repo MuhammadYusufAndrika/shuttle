@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import AppLayout from '@/Layouts/AppLayout';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
@@ -6,17 +6,15 @@ import UpdateProfileInformationForm from './Partials/UpdateProfileInformationFor
 
 export default function Edit({ mustVerifyEmail, status }) {
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="profile-header-wrap">
-                    <h2 className="profile-header-title">Profile Settings</h2>
-                    <p className="profile-header-subtitle">Kelola informasi akun, kredensial, dan keamanan akses Anda.</p>
-                </div>
-            }
-        >
+        <AppLayout>
             <Head title="Profile" />
 
             <div className="profile-page">
+                <div className="profile-hero">
+                    <h1 className="profile-header-title">Profile Settings</h1>
+                    <p className="profile-header-subtitle">Kelola informasi akun, kredensial, dan keamanan akses Anda.</p>
+                </div>
+
                 <div className="profile-grid">
                     <div className="profile-panel">
                         <UpdateProfileInformationForm
@@ -35,6 +33,6 @@ export default function Edit({ mustVerifyEmail, status }) {
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </AppLayout>
     );
 }

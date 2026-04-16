@@ -73,6 +73,32 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
         };
     }, []);
 
+    // Sync local state whenever Inertia props are refreshed.
+    useEffect(() => {
+        setDriverStatus(initial);
+    }, [initial?.status, initial?.updated_at]);
+
+    useEffect(() => {
+        setQueue((initialQueue || []).map(normalizeRequest).filter(Boolean));
+    }, [initialQueue]);
+
+    useEffect(() => {
+        setActiveRequest(initialActive || null);
+    }, [initialActive?.id, initialActive?.status, initialActive?.updated_at]);
+
+    // Fallback polling so UI still updates without manual refresh when websocket is unavailable.
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            router.reload({
+                only: ['driverStatus', 'queue', 'activeRequest'],
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 4000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     const registerPush = async () => {
         if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
 

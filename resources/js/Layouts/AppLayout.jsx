@@ -27,11 +27,22 @@ export default function AppLayout({ children, title }) {
 
                 <div className="topnav-right">
                     {user && (
-                        <div className="nav-user" onClick={() => router.visit(route('profile.edit'))}>
-                            <span className={`nav-role-badge ${roleBadgeClass}`}>{user.role}</span>
-                            <span>{user.name.split(' ')[0]}</span>
-                            <span style={{ opacity: 0.4 }}>›</span>
-                        </div>
+                        <>
+                            <div className="nav-user" onClick={() => router.visit(route('profile.edit'))}>
+                                <span className={`nav-role-badge ${roleBadgeClass}`}>{user.role}</span>
+                                <span>{user.name.split(' ')[0]}</span>
+                                <span style={{ opacity: 0.4 }}>›</span>
+                            </div>
+
+                            <Link
+                                href={route('logout')}
+                                method="post"
+                                as="button"
+                                className="topnav-logout"
+                            >
+                                Logout
+                            </Link>
+                        </>
                     )}
                 </div>
             </nav>

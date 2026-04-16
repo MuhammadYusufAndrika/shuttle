@@ -7,8 +7,10 @@ use App\Models\DriverStatus;
 use App\Models\ShuttleRequest;
 use App\Services\ShuttleRequestService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class DriverController extends Controller
 {
@@ -73,7 +75,7 @@ class DriverController extends Controller
             ['status' => $request->status, 'last_seen' => now()]
         );
 
-        broadcast(new DriverStatusChanged($driver, $status))->toOthers();
+        $this->broadcastToOthers(new DriverStatusChanged($driver, $status));
 
         return back()->with('success', ['message' => 'Status diperbarui.']);
     }
@@ -100,8 +102,20 @@ class DriverController extends Controller
             ]
         );
 
-        broadcast(new DriverStatusChanged($driver, $status))->toOthers();
+        $this->broadcastToOthers(new DriverStatusChanged($driver, $status));
 
         return response()->json(['ok' => true]);
+    }
+
+    private function broadcastToOthers(object $event): void
+    {
+        try {
+            broadcast($event)->toOthers();
+        } catch (Throwable $e) {
+            Log::warning('Broadcast failed in DriverController', [
+                'event' => $event::class,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -36,6 +36,19 @@ export default function UserIndex({ locations, activeRequest: initialActive, rec
         setShowForm(!initialActive);
     }, [initialActive?.id, initialActive?.status]);
 
+    // Fallback polling to keep request status updated when websocket is unavailable.
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            router.reload({
+                only: ['activeRequest', 'recentRequests'],
+                preserveState: true,
+                preserveScroll: true,
+            });
+        }, 4000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     // Real-time listen to own request updates
     useEffect(() => {
         if (!activeRequest) return;

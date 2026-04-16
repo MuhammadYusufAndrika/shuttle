@@ -10,6 +10,8 @@ use App\Models\DriverStatus;
 use App\Models\ShuttleRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class ShuttleRequestService
 {
@@ -33,7 +35,7 @@ class ShuttleRequestService
             ActivityLog::record('request.created', $req);
 
             // Broadcast to admin + driver boards
-            broadcast(new RequestCreated($req))->toOthers();
+            $this->broadcastToOthers(new RequestCreated($req));
 
             // Push notification to available drivers (async)
             SendPushNotificationToDrivers::dispatch($req);
@@ -69,7 +71,7 @@ class ShuttleRequestService
 
             ActivityLog::record('request.accepted', $req, ['driver_id' => $driver->id]);
             ActivityLog::record('request.on_the_way', $req);
-            broadcast(new RequestStatusUpdated($req->fresh()))->toOthers();
+            $this->broadcastToOthers(new RequestStatusUpdated($req->fresh()));
 
             return $req;
         });
@@ -104,7 +106,7 @@ class ShuttleRequestService
             }
 
             ActivityLog::record("request.{$status}", $req);
-            broadcast(new RequestStatusUpdated($req->fresh()))->toOthers();
+            $this->broadcastToOthers(new RequestStatusUpdated($req->fresh()));
 
             return $req;
         });
@@ -124,8 +126,20 @@ class ShuttleRequestService
         ]);
 
         ActivityLog::record('request.cancelled', $req, ['reason' => $reason]);
-        broadcast(new RequestStatusUpdated($req->fresh()))->toOthers();
+        $this->broadcastToOthers(new RequestStatusUpdated($req->fresh()));
 
         return $req;
+    }
+
+    private function broadcastToOthers(object $event): void
+    {
+        try {
+            broadcast($event)->toOthers();
+        } catch (Throwable $e) {
+            Log::warning('Broadcast failed in ShuttleRequestService', [
+                'event' => $event::class,
+                'message' => $e->getMessage(),
+            ]);
+        }
     }
 }

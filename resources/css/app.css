@@ -151,6 +151,25 @@ body {
 
 .nav-user:hover { border-color: var(--border-strong); color: var(--text-primary); }
 
+.topnav-logout {
+  border: 1px solid rgba(239,68,68,0.35);
+  background: rgba(239,68,68,0.14);
+  color: #fca5a5;
+  border-radius: 8px;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.topnav-logout:hover {
+  background: rgba(239,68,68,0.22);
+  color: #fecaca;
+  border-color: rgba(239,68,68,0.5);
+}
+
 .nav-role-badge {
   font-size: 0.65rem;
   font-weight: 600;
@@ -845,15 +864,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 0.35rem;
 }
 
+.profile-hero {
+  margin-bottom: 1.1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: linear-gradient(140deg, rgba(249,115,22,0.12), rgba(15,23,42,0.75));
+}
+
 .profile-header-title {
-  color: #0f172a;
+  color: var(--text-primary);
   font-size: 1.35rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .profile-header-subtitle {
-  color: #475569;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -869,16 +896,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 
 .profile-panel {
-  background: linear-gradient(170deg, #ffffff, #f8fafc);
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(170deg, rgba(19,19,26,0.98), rgba(10,10,15,0.98));
+  border: 1px solid var(--border);
   border-radius: 18px;
   padding: 1.2rem;
-  box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+  box-shadow: var(--shadow);
 }
 
 .profile-panel.danger {
-  border-color: #fecaca;
-  background: linear-gradient(170deg, #fff, #fff5f5);
+  border-color: rgba(239,68,68,0.35);
+  background: linear-gradient(170deg, rgba(28,12,16,0.95), rgba(10,10,15,0.98));
 }
 
 .profile-form { max-width: 760px; }
@@ -893,12 +920,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 .profile-section-title {
   font-size: 1.05rem;
-  color: #0f172a;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 .profile-section-copy {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.88rem;
   line-height: 1.6;
 }
@@ -911,15 +938,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 
 .profile-saved {
-  color: #0f766e;
+  color: #2dd4bf;
   font-size: 0.82rem;
   font-weight: 600;
 }
 
 .profile-note {
-  border: 1px solid #bfdbfe;
-  background: #eff6ff;
-  color: #1e3a8a;
+  border: 1px solid rgba(59,130,246,0.35);
+  background: rgba(37,99,235,0.12);
+  color: #bfdbfe;
   border-radius: 10px;
   padding: 0.75rem 0.85rem;
   font-size: 0.84rem;
@@ -927,13 +954,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 .profile-link {
   margin-left: 0.45rem;
-  color: #2563eb;
+  color: #93c5fd;
   text-decoration: underline;
 }
 
 .profile-alert.success {
   margin-top: 0.4rem;
-  color: #166534;
+  color: #86efac;
   font-weight: 600;
 }
 
@@ -951,12 +978,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 .profile-modal-title {
   font-size: 1rem;
-  color: #0f172a;
+  color: var(--text-primary);
   font-weight: 700;
 }
 
 .profile-modal-copy {
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.86rem;
   line-height: 1.6;
 }
