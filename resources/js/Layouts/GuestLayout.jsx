@@ -3,15 +3,42 @@ import { Link } from '@inertiajs/react';
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
-                <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
-                </Link>
-            </div>
+        <div className="login-page">
+            <div className="login-shell">
+                <aside className="login-hero">
+                    <Link href="/" className="login-brand" aria-label="Shuttle Dahana Home">
+                        <div className="login-brand-logo">🚌</div>
+                        <div>
+                            <div className="login-brand-name">Shuttle Dahana</div>
+                            <div className="login-brand-caption">Smart Internal Mobility</div>
+                        </div>
+                    </Link>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
-                {children}
+                    <h1 className="login-hero-title">Mobilitas internal yang cepat, aman, dan real-time.</h1>
+                    <p className="login-hero-copy">
+                        Akses dashboard sesuai role Anda untuk memantau, menerima, dan mengeksekusi permintaan shuttle tanpa delay.
+                    </p>
+
+                    <div className="login-hero-pills">
+                        <span>Real-time dispatch</span>
+                        <span>Role-based access</span>
+                        <span>Live status updates</span>
+                    </div>
+                </aside>
+
+                <section className="login-box">
+                    <div className="login-box-header">
+                        <Link href="/" className="login-logo-wrap" aria-label="Shuttle Dahana Home">
+                            <ApplicationLogo className="h-14 w-14 fill-current text-white" />
+                        </Link>
+                        <div>
+                            <p className="login-box-kicker">Welcome Back</p>
+                            <h2 className="login-box-title">Sign In</h2>
+                        </div>
+                    </div>
+
+                    <div className="login-card">{children}</div>
+                </section>
             </div>
         </div>
     );
