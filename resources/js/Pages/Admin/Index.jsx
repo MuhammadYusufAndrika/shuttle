@@ -194,7 +194,7 @@ export default function AdminIndex({ stats, activeRequests: initial, drivers: in
                                             <strong>{req.request_code}</strong>
                                             {req.priority === 1 && <PriorityBadge priority={1} lang={lang} />}
                                         </td>
-                                        <td>{req.user?.name || req.user_name}</td>
+                                        <td>{req.user?.name || req.user_name || req.requester_name || 'Guest'}</td>
                                         <td>{lang === 'id' ? (req.location?.name || req.location) : (req.location?.name_en || req.location_en || req.location?.name || req.location)}</td>
                                         <td>{req.driver?.name || req.driver_name || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                         <td><StatusBadge status={req.status} lang={lang} /></td>

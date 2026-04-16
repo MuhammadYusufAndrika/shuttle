@@ -3,19 +3,26 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\GuestBookingController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Root redirect based on role
 Route::get('/', function () {
-    if (!auth()->check()) return redirect()->route('login');
+    if (!auth()->check()) return redirect()->route('guest.booking');
     return match (auth()->user()->role) {
         'admin'  => redirect()->route('admin.index'),
         'driver' => redirect()->route('driver.index'),
         default  => redirect()->route('employee.index'),
     };
 })->name('home');
+
+// ── Public guest booking routes ───────────────────────────────────────────
+Route::get('/book', [GuestBookingController::class, 'create'])->name('guest.booking');
+Route::post('/book', [GuestBookingController::class, 'store'])
+    ->middleware('throttle:15,1')
+    ->name('guest.requests.store');
 
 // ── Employee routes ────────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:employee,admin'])->prefix('employee')->name('employee.')->group(function () {

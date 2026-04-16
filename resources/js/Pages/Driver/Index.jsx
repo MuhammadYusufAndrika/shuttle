@@ -16,7 +16,7 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
 
         return {
             ...req,
-            user_name: req.user_name || req.user?.name || '-',
+            user_name: req.user_name || req.requester_name || req.user?.name || '-',
             location_name: typeof req.location === 'string'
                 ? req.location
                 : (req.location?.name || req.location_name || '-'),
@@ -173,7 +173,7 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
         arrived: { label: t('Selesai ✅', 'Complete ✅'), next: 'completed' },
     };
 
-    const getPassengerName = (req) => req.user_name || req.user?.name || '-';
+    const getPassengerName = (req) => req.user_name || req.requester_name || req.user?.name || '-';
 
     const getLocationLabel = (req) => {
         if (typeof req.location === 'string') return req.location;
@@ -263,7 +263,7 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
                         <div className="request-info">
                             <span>👤</span>
-                            <span>{t('Penumpang', 'Passenger')}: <strong>{activeRequest.user?.name}</strong></span>
+                            <span>{t('Penumpang', 'Passenger')}: <strong>{activeRequest.user?.name || activeRequest.requester_name || '-'}</strong></span>
                         </div>
                         <div className="request-info">
                             <span>📍</span>

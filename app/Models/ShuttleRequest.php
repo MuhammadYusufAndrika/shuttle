@@ -11,6 +11,7 @@ class ShuttleRequest extends Model
 
     protected $fillable = [
         'request_code', 'user_id', 'location_id', 'destination',
+        'requester_name', 'is_guest',
         'driver_id', 'status', 'priority', 'passenger_count', 'notes',
         'requested_at', 'accepted_at', 'on_the_way_at', 'arrived_at',
         'completed_at', 'cancelled_at', 'cancel_reason', 'response_time_seconds',
@@ -26,6 +27,7 @@ class ShuttleRequest extends Model
         'priority'       => 'integer',
         'passenger_count'=> 'integer',
         'response_time_seconds' => 'integer',
+        'is_guest'       => 'boolean',
     ];
 
     const STATUS_PENDING    = 'pending';

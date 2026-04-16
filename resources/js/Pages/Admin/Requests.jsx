@@ -121,7 +121,7 @@ export default function AdminRequests({ requests, drivers, filters }) {
                             {data.map(req => (
                                 <tr key={req.id}>
                                     <td><strong>{req.request_code}</strong></td>
-                                    <td>{req.user?.name}</td>
+                                    <td>{req.user?.name || req.requester_name || 'Guest'}</td>
                                     <td>{lang === 'id' ? req.location?.name : (req.location?.name_en || req.location?.name)}</td>
                                     <td>{req.driver?.name ?? <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                                     <td><StatusBadge status={req.status} lang={lang} /></td>

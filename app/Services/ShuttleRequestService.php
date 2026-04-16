@@ -23,6 +23,8 @@ class ShuttleRequestService
         return DB::transaction(function () use ($user, $data) {
             $req = ShuttleRequest::create([
                 'user_id'         => $user->id,
+                'requester_name'  => $user->name,
+                'is_guest'        => false,
                 'location_id'     => $data['location_id'],
                 'destination'     => $data['destination'] ?? null,
                 'priority'        => $data['priority'] ?? 0,
@@ -38,6 +40,37 @@ class ShuttleRequestService
             $this->broadcastToOthers(new RequestCreated($req));
 
             // Push notification to available drivers (async)
+            SendPushNotificationToDrivers::dispatch($req);
+
+            return $req;
+        });
+    }
+
+    /**
+     * Create a new shuttle request from a guest (no login required).
+     */
+    public function createGuest(array $data): ShuttleRequest
+    {
+        return DB::transaction(function () use ($data) {
+            $req = ShuttleRequest::create([
+                'user_id'         => null,
+                'requester_name'  => $data['requester_name'],
+                'is_guest'        => true,
+                'location_id'     => $data['location_id'],
+                'destination'     => $data['destination'] ?? null,
+                'priority'        => $data['priority'] ?? 0,
+                'passenger_count' => $data['passenger_count'] ?? 1,
+                'notes'           => $data['notes'] ?? null,
+                'requested_at'    => now(),
+                'status'          => ShuttleRequest::STATUS_PENDING,
+            ]);
+
+            ActivityLog::record('request.created.guest', $req, [
+                'requester_name' => $req->requester_name,
+            ]);
+
+            $this->broadcastToOthers(new RequestCreated($req));
+
             SendPushNotificationToDrivers::dispatch($req);
 
             return $req;

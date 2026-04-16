@@ -33,10 +33,13 @@ class RequestCreated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        $requesterName = $this->request->requester_name ?? $this->request->user?->name ?? '-';
+
         return [
             'id'              => $this->request->id,
             'request_code'    => $this->request->request_code,
-            'user_name'       => $this->request->user->name,
+            'user_name'       => $requesterName,
+            'requester_name'  => $requesterName,
             'location'        => $this->request->location->name,
             'location_en'     => $this->request->location->name_en,
             'priority'        => $this->request->priority,
