@@ -120,7 +120,15 @@ return [
 
     'maintenance' => [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
-        'store' => env('APP_MAINTENANCE_STORE', 'database'),
+        'store'  => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | VAPID Keys (Web Push Notifications)
+    |--------------------------------------------------------------------------
+    */
+    'vapid_public_key'  => env('VAPID_PUBLIC_KEY', ''),
+    'vapid_private_key' => env('VAPID_PRIVATE_KEY', ''),
 
 ];

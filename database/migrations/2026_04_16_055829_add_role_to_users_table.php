@@ -6,23 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
-    }
-
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
-    {
-        Schema::table('users', function (Blueprint $table) {
-            //
-        });
-    }
+    // NOTE: role and other fields are already added in the create_users_table migration.
+    // This migration is kept as a no-op placeholder to avoid errors from the artisan stub.
+    public function up(): void {}
+    public function down(): void {}
 };
