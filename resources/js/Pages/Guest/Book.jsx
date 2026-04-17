@@ -1,11 +1,25 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
+import { StatusBadge } from '@/Components/StatusBadge';
 
-export default function GuestBook({ locations }) {
+const STEPS = [
+    { key: 'pending', icon: '⏳', label: 'Menunggu' },
+    { key: 'accepted', icon: '✅', label: 'Diterima' },
+    { key: 'on_the_way', icon: '🚌', label: 'OTW' },
+    { key: 'arrived', icon: '📍', label: 'Tiba' },
+    { key: 'completed', icon: '🎉', label: 'Selesai' },
+];
+
+const stepIndex = (status) => STEPS.findIndex((s) => s.key === status);
+
+export default function GuestBook({ locations, activeRequest: initialActive, initialRequesterName = '' }) {
     const { flash } = usePage().props;
+    const [activeRequest, setActiveRequest] = useState(initialActive || null);
+    const echoRef = useRef(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
-        requester_name: '',
+        requester_name: initialRequesterName,
         location_id: '',
         destination: '',
         priority: 0,
@@ -13,13 +27,65 @@ export default function GuestBook({ locations }) {
         notes: '',
     });
 
+    useEffect(() => {
+        setActiveRequest(initialActive || null);
+        if (initialRequesterName) {
+            setData('requester_name', initialRequesterName);
+        }
+    }, [initialActive?.id, initialActive?.status, initialRequesterName]);
+
+    useEffect(() => {
+        if (!activeRequest?.id || !window.Echo) return;
+
+        const channel = window.Echo.channel('requests');
+        channel.listen('.request.status.updated', (e) => {
+            if (e.id !== activeRequest.id) return;
+
+            setActiveRequest((prev) => prev
+                ? {
+                    ...prev,
+                    status: e.status,
+                    driver_name: e.driver_name,
+                    updated_at: e.updated_at,
+                }
+                : prev,
+            );
+
+            if (e.status === 'completed') {
+                setTimeout(() => {
+                    setActiveRequest(null);
+                    router.reload({ only: ['activeRequest'], preserveState: true, preserveScroll: true });
+                }, 2500);
+            }
+        });
+
+        echoRef.current = channel;
+
+        return () => {
+            echoRef.current?.stopListening('.request.status.updated');
+        };
+    }, [activeRequest?.id]);
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            router.reload({ only: ['activeRequest'], preserveState: true, preserveScroll: true });
+        }, 4000);
+
+        return () => clearInterval(intervalId);
+    }, []);
+
     const submit = (e) => {
         e.preventDefault();
         post(route('guest.requests.store'), {
             preserveScroll: true,
-            onSuccess: () => reset('destination', 'priority', 'passenger_count', 'notes'),
+            onSuccess: () => {
+                reset('destination', 'priority', 'passenger_count', 'notes');
+                router.reload({ only: ['activeRequest', 'initialRequesterName'], preserveState: true, preserveScroll: true });
+            },
         });
     };
+
+    const currentStep = activeRequest ? stepIndex(activeRequest.status) : -1;
 
     return (
         <AppLayout>
@@ -35,6 +101,44 @@ export default function GuestBook({ locations }) {
                     <div className="card" style={{ marginBottom: '1rem', borderColor: 'rgba(34,197,94,0.45)' }}>
                         <div className="card-title" style={{ color: 'var(--success)' }}>Permintaan terkirim</div>
                         <div className="card-subtitle">Kode booking: <strong>{flash.success.request_code}</strong></div>
+                    </div>
+                )}
+
+                {activeRequest && (
+                    <div className="card animate-fade-in" style={{ marginBottom: '1rem', borderColor: 'rgba(249,115,22,0.35)' }}>
+                        <div className="card-header">
+                            <div>
+                                <div className="card-title">Status Booking Anda</div>
+                                <div className="card-subtitle">{activeRequest.request_code}</div>
+                            </div>
+                            <StatusBadge status={activeRequest.status} />
+                        </div>
+
+                        <div className="status-tracker" style={{ marginBottom: '1rem' }}>
+                            {STEPS.map((step, index) => {
+                                const isDone = index < currentStep;
+                                const isActive = index === currentStep;
+
+                                return (
+                                    <div key={step.key} className={`status-step ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}`}>
+                                        <div className="status-step-dot">{step.icon}</div>
+                                        <div className="status-step-label">{step.label}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        <div className="request-info">
+                            <span>📍</span>
+                            <span><strong>{activeRequest.location?.name || '-'}</strong></span>
+                        </div>
+
+                        {(activeRequest.driver?.name || activeRequest.driver_name) && (
+                            <div className="request-info" style={{ marginTop: '0.4rem' }}>
+                                <span>🧑‍✈️</span>
+                                <span>Driver: <strong>{activeRequest.driver?.name || activeRequest.driver_name}</strong></span>
+                            </div>
+                        )}
                     </div>
                 )}
 

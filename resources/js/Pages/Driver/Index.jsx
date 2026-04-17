@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import AppLayout from '@/Layouts/AppLayout';
 import { StatusBadge, DriverStatusBadge, PriorityBadge } from '@/Components/StatusBadge';
 
-export default function DriverIndex({ driverStatus: initial, queue: initialQueue, activeRequest: initialActive }) {
+export default function DriverIndex({ driverStatus: initial, queue: initialQueue, activeRequests: initialActiveRequests = [] }) {
     const { auth } = usePage().props;
     const [lang, setLang] = useState('id');
     const [driverStatus, setDriverStatus] = useState(initial);
@@ -24,12 +24,27 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
         };
     };
 
+    const normalizeActiveRequest = (req) => {
+        const normalized = normalizeRequest(req);
+        if (!normalized) return null;
+
+        return {
+            ...normalized,
+            user: normalized.user || (normalized.user_name ? { name: normalized.user_name } : null),
+            location: normalized.location && typeof normalized.location === 'object'
+                ? normalized.location
+                : {
+                    name: normalized.location_name,
+                    name_en: normalized.location_en,
+                },
+        };
+    };
+
     const [queue, setQueue] = useState((initialQueue || []).map(normalizeRequest).filter(Boolean));
-    const [activeRequest, setActiveRequest] = useState(initialActive);
+    const [activeRequests, setActiveRequests] = useState((initialActiveRequests || []).map(normalizeActiveRequest).filter(Boolean));
 
     const t = (id, en) => (lang === 'id' ? id : en);
 
-    // Subscribe push + listen WebSocket
     useEffect(() => {
         registerPush();
 
@@ -42,7 +57,7 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
 
                 setQueue((prev) => [normalized, ...prev]);
 
-                if (canUseNotification && Notification.permission === 'granted' && driverStatus.status === 'available') {
+                if (canUseNotification && Notification.permission === 'granted' && (driverStatus.status === 'available' || driverStatus.status === 'busy')) {
                     new Notification(`🚌 ${normalized.priority === 1 ? '🚨 Urgent! ' : ''}Request Baru`, {
                         body: `${normalized.user_name} dari ${normalized.location_name}`,
                         icon: '/icons/icon-192.png',
@@ -55,9 +70,20 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
                     setQueue((prev) => prev.filter((r) => r.id !== e.id));
                 }
 
-                if (activeRequest?.id === e.id) {
-                    setActiveRequest((prev) => ({ ...prev, status: e.status }));
-                }
+                setActiveRequests((prev) => {
+                    const exists = prev.some((r) => r.id === e.id);
+                    if (!exists) return prev;
+
+                    if (e.status === 'completed') {
+                        const next = prev.filter((r) => r.id !== e.id);
+                        if (next.length === 0) {
+                            setDriverStatus((current) => ({ ...current, status: 'available' }));
+                        }
+                        return next;
+                    }
+
+                    return prev.map((r) => (r.id === e.id ? { ...r, status: e.status } : r));
+                });
             });
 
             echoRef.current = ch;
@@ -73,7 +99,6 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
         };
     }, []);
 
-    // Sync local state whenever Inertia props are refreshed.
     useEffect(() => {
         setDriverStatus(initial);
     }, [initial?.status, initial?.updated_at]);
@@ -83,14 +108,13 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
     }, [initialQueue]);
 
     useEffect(() => {
-        setActiveRequest(initialActive || null);
-    }, [initialActive?.id, initialActive?.status, initialActive?.updated_at]);
+        setActiveRequests((initialActiveRequests || []).map(normalizeActiveRequest).filter(Boolean));
+    }, [initialActiveRequests]);
 
-    // Fallback polling so UI still updates without manual refresh when websocket is unavailable.
     useEffect(() => {
         const intervalId = setInterval(() => {
             router.reload({
-                only: ['driverStatus', 'queue', 'activeRequest'],
+                only: ['driverStatus', 'queue', 'activeRequests'],
                 preserveState: true,
                 preserveScroll: true,
             });
@@ -135,13 +159,21 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
             onSuccess: () => {
                 const req = queue.find((r) => r?.id === id);
                 if (req) {
-                    setActiveRequest({
-                        ...req,
-                        status: 'on_the_way',
-                        user: req.user || { name: req.user_name },
-                        location: req.location || { name: req.location_name, name_en: req.location_en },
+                    setActiveRequests((prev) => {
+                        if (prev.some((r) => r.id === req.id)) return prev;
+
+                        return [
+                            {
+                                ...req,
+                                status: 'on_the_way',
+                                user: req.user || { name: req.user_name },
+                                location: req.location || { name: req.location_name, name_en: req.location_en },
+                            },
+                            ...prev,
+                        ];
                     });
                 }
+
                 setDriverStatus((prev) => ({ ...prev, status: 'busy' }));
                 setQueue((prev) => prev.filter((r) => r.id !== id));
             },
@@ -152,20 +184,26 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
         router.patch(route('driver.requests.status', id), { status }, {
             preserveScroll: true,
             onSuccess: () => {
-                setActiveRequest((prev) => ({ ...prev, status }));
-
                 if (status === 'completed') {
-                    setTimeout(() => {
-                        setActiveRequest(null);
-                        router.reload({ only: ['queue'] });
-                    }, 2000);
+                    setActiveRequests((prev) => {
+                        const next = prev.filter((r) => r.id !== id);
+                        if (next.length === 0) {
+                            setDriverStatus((current) => ({ ...current, status: 'available' }));
+                        }
+                        return next;
+                    });
+                    router.reload({ only: ['queue', 'activeRequests', 'driverStatus'] });
+                    return;
                 }
+
+                setActiveRequests((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
             },
         });
     };
 
     const statusIsAvailable = driverStatus?.status === 'available';
     const statusIsBusy = driverStatus?.status === 'busy';
+    const canTakeOrders = statusIsAvailable || statusIsBusy;
 
     const nextStatusMap = {
         accepted: { label: t('OTW 🚌', 'On The Way 🚌'), next: 'on_the_way' },
@@ -245,60 +283,66 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
                 </div>
                 {statusIsBusy && (
                     <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--warning)' }}>
-                        ⚠️ {t('Anda sedang mengerjakan order. Selesaikan dulu.', 'You have an active order. Complete it first.')}
+                        ⚠️ {t('Anda sedang mengerjakan order, tetapi masih bisa mengambil order lain.', 'You are currently busy, but you can still take more orders.')}
                     </div>
                 )}
             </div>
 
-            {activeRequest && (
-                <div className="card animate-fade-in" style={{ marginBottom: '1.5rem', borderColor: 'rgba(249,115,22,0.4)' }}>
-                    <div className="card-header">
-                        <div>
-                            <div className="card-title">🚨 {t('Order Aktif', 'Active Order')}</div>
-                            <div className="card-subtitle">{activeRequest.request_code}</div>
-                        </div>
-                        <StatusBadge status={activeRequest.status} lang={lang} />
+            {activeRequests.length > 0 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <div className="section-title">
+                        🚨 {t('Order Aktif', 'Active Orders')}
+                        <span style={{ background: 'var(--warning)', color: '#111827', borderRadius: '20px', padding: '0.1rem 0.5rem', fontSize: '0.75rem', marginLeft: '0.5rem' }}>
+                            {activeRequests.length}
+                        </span>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
-                        <div className="request-info">
-                            <span>👤</span>
-                            <span>{t('Penumpang', 'Passenger')}: <strong>{activeRequest.user?.name || activeRequest.requester_name || '-'}</strong></span>
-                        </div>
-                        <div className="request-info">
-                            <span>📍</span>
-                            <span>{t('Lokasi', 'Location')}: <strong>{activeRequest.location?.name}</strong></span>
-                        </div>
-                        <div className="request-info">
-                            <span>👥</span>
-                            <span>{t('Penumpang', 'Passengers')}: <strong>{activeRequest.passenger_count} {t('orang', 'people')}</strong></span>
-                        </div>
-                        {activeRequest.notes && (
-                            <div className="request-info">
-                                <span>📝</span>
-                                <span><em style={{ color: 'var(--text-muted)' }}>{activeRequest.notes}</em></span>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {activeRequests.map((req) => (
+                            <div key={req.id} className="card animate-fade-in" style={{ borderColor: 'rgba(249,115,22,0.4)' }}>
+                                <div className="card-header">
+                                    <div>
+                                        <div className="card-title">{req.request_code}</div>
+                                    </div>
+                                    <StatusBadge status={req.status} lang={lang} />
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '1rem' }}>
+                                    <div className="request-info">
+                                        <span>👤</span>
+                                        <span>{t('Penumpang', 'Passenger')}: <strong>{req.user?.name || req.requester_name || '-'}</strong></span>
+                                    </div>
+                                    <div className="request-info">
+                                        <span>📍</span>
+                                        <span>{t('Lokasi', 'Location')}: <strong>{req.location?.name || getLocationLabel(req)}</strong></span>
+                                    </div>
+                                    <div className="request-info">
+                                        <span>👥</span>
+                                        <span>{t('Penumpang', 'Passengers')}: <strong>{req.passenger_count} {t('orang', 'people')}</strong></span>
+                                    </div>
+                                    {req.notes && (
+                                        <div className="request-info">
+                                            <span>📝</span>
+                                            <span><em style={{ color: 'var(--text-muted)' }}>{req.notes}</em></span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {nextStatusMap[req.status] && (
+                                    <button
+                                        className="btn btn-primary btn-full btn-lg"
+                                        onClick={() => updateStatus(req.id, nextStatusMap[req.status].next)}
+                                    >
+                                        {nextStatusMap[req.status].label}
+                                    </button>
+                                )}
                             </div>
-                        )}
+                        ))}
                     </div>
-
-                    {nextStatusMap[activeRequest.status] && (
-                        <button
-                            className="btn btn-primary btn-full btn-lg"
-                            onClick={() => updateStatus(activeRequest.id, nextStatusMap[activeRequest.status].next)}
-                        >
-                            {nextStatusMap[activeRequest.status].label}
-                        </button>
-                    )}
-
-                    {activeRequest.status === 'completed' && (
-                        <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--success)', fontWeight: 700 }}>
-                            🎉 {t('Order selesai! Terima kasih.', 'Order completed! Thank you.')}
-                        </div>
-                    )}
                 </div>
             )}
 
-            {statusIsAvailable && !activeRequest && (
+            {canTakeOrders && (
                 <div>
                     <div className="section-title">
                         📋 {t('Antrian Request', 'Request Queue')}
@@ -354,7 +398,7 @@ export default function DriverIndex({ driverStatus: initial, queue: initialQueue
                 </div>
             )}
 
-            {!statusIsAvailable && !statusIsBusy && (
+            {!canTakeOrders && (
                 <div className="empty-state">
                     <div className="empty-state-icon">😴</div>
                     <div className="empty-state-text">

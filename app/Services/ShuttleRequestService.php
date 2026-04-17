@@ -132,10 +132,23 @@ class ShuttleRequestService
 
             $req->update(['status' => $status, $timestampField => now()]);
 
-            // Free up driver if completed
+            // Free up driver only if no other active requests remain.
             if ($status === ShuttleRequest::STATUS_COMPLETED) {
+                $hasOtherActiveRequests = ShuttleRequest::where('driver_id', $driver->id)
+                    ->where('id', '!=', $req->id)
+                    ->whereIn('status', [
+                        ShuttleRequest::STATUS_ACCEPTED,
+                        ShuttleRequest::STATUS_ON_THE_WAY,
+                        ShuttleRequest::STATUS_ARRIVED,
+                    ])
+                    ->exists();
+
                 DriverStatus::where('driver_id', $driver->id)
-                    ->update(['status' => DriverStatus::STATUS_AVAILABLE]);
+                    ->update([
+                        'status' => $hasOtherActiveRequests
+                            ? DriverStatus::STATUS_BUSY
+                            : DriverStatus::STATUS_AVAILABLE,
+                    ]);
             }
 
             ActivityLog::record("request.{$status}", $req);

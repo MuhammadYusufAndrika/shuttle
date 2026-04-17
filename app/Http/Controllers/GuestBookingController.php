@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
+use App\Models\ShuttleRequest;
 use App\Services\ShuttleRequestService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,8 +15,24 @@ class GuestBookingController extends Controller
 
     public function create(): Response
     {
+        $guestRequestId = session('guest_request_id');
+
+        $activeRequest = $guestRequestId
+            ? ShuttleRequest::with(['location', 'driver'])
+                ->where('id', $guestRequestId)
+                ->whereIn('status', [
+                    ShuttleRequest::STATUS_PENDING,
+                    ShuttleRequest::STATUS_ACCEPTED,
+                    ShuttleRequest::STATUS_ON_THE_WAY,
+                    ShuttleRequest::STATUS_ARRIVED,
+                ])
+                ->first()
+            : null;
+
         return Inertia::render('Guest/Book', [
             'locations' => Location::where('is_active', true)->orderBy('name')->get(),
+            'activeRequest' => $activeRequest,
+            'initialRequesterName' => session('guest_requester_name', ''),
         ]);
     }
 
@@ -31,6 +48,11 @@ class GuestBookingController extends Controller
         ]);
 
         $req = $this->service->createGuest($validated);
+
+        session([
+            'guest_request_id' => $req->id,
+            'guest_requester_name' => $validated['requester_name'],
+        ]);
 
         return back()->with('success', [
             'message' => 'Booking berhasil dikirim. Mohon tunggu driver.',

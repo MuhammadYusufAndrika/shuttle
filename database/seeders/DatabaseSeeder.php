@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
         }
 
         // ── Locations (PT Dahana Ring 1) ──────────────────────────────────
-        $locations = [
+        $locations = [  
             ['name' => 'Gerbang Utama',         'name_en' => 'Main Gate',         'code' => 'GATE-A', 'zone' => 'Umum',   'lat' => -6.9175, 'lng' => 107.6191, 'address' => 'Jl. Raya Subang km 12'],
             ['name' => 'Area Produksi Ring 1',   'name_en' => 'Production Area R1','code' => 'RING-1', 'zone' => 'Ring 1', 'lat' => -6.9180, 'lng' => 107.6195],
             ['name' => 'Area Produksi Ring 2',   'name_en' => 'Production Area R2','code' => 'RING-2', 'zone' => 'Ring 2', 'lat' => -6.9185, 'lng' => 107.6200],

@@ -34,11 +34,12 @@ class DriverController extends Controller
                 ->orderBy('priority', 'desc')
                 ->orderBy('requested_at')
                 ->get(),
-            'activeRequest' => ShuttleRequest::with(['user', 'location'])
+            'activeRequests' => ShuttleRequest::with(['user', 'location'])
                 ->where('driver_id', $driver->id)
                 ->whereIn('status', ['accepted', 'on_the_way', 'arrived'])
-                ->latest()
-                ->first(),
+                ->orderBy('priority', 'desc')
+                ->orderBy('requested_at')
+                ->get(),
         ]);
     }
 
