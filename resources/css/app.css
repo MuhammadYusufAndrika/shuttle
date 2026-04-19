@@ -170,6 +170,23 @@ body {
   border-color: rgba(239,68,68,0.5);
 }
 
+.topnav-login {
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.topnav-login:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-card-hover);
+}
+
 .nav-role-badge {
   font-size: 0.65rem;
   font-weight: 600;

@@ -26,7 +26,7 @@ export default function AppLayout({ children, title }) {
                 </Link>
 
                 <div className="topnav-right">
-                    {user && (
+                    {user ? (
                         <>
                             <div className="nav-user" onClick={() => router.visit(route('profile.edit'))}>
                                 <span className={`nav-role-badge ${roleBadgeClass}`}>{user.role}</span>
@@ -43,6 +43,10 @@ export default function AppLayout({ children, title }) {
                                 Logout
                             </Link>
                         </>
+                    ) : (
+                        <Link href={route('login')} className="topnav-login">
+                            Login
+                        </Link>
                     )}
                 </div>
             </nav>
