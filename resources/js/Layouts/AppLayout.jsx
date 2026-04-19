@@ -22,7 +22,7 @@ export default function AppLayout({ children, title }) {
             <nav className="topnav">
                 <Link href={route('home')} className="topnav-brand">
                     <div className="topnav-logo">🚌</div>
-                    <span className="topnav-title">Shuttle <span>Dahana</span></span>
+                    <span className="topnav-title">Shuttle <span>PT</span></span>
                 </Link>
 
                 <div className="topnav-right">
