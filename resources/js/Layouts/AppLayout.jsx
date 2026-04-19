@@ -20,22 +20,22 @@ export default function AppLayout({ children, title }) {
         <div className="app-layout">
             {/* Top Navigation */}
             <nav className="topnav">
-                <Link href={route('home')} className="topnav-brand">
+                <Link href="/" className="topnav-brand">
                     <div className="topnav-logo">🚌</div>
-                    <span className="topnav-title">Shuttle <span>PT</span></span>
+                    <span className="topnav-title">Shuttle <span>PT Dahana</span></span>
                 </Link>
 
                 <div className="topnav-right">
                     {user ? (
                         <>
-                            <div className="nav-user" onClick={() => router.visit(route('profile.edit'))}>
+                            <div className="nav-user" onClick={() => router.visit('/profile')}>
                                 <span className={`nav-role-badge ${roleBadgeClass}`}>{user.role}</span>
                                 <span>{user.name.split(' ')[0]}</span>
                                 <span style={{ opacity: 0.4 }}>›</span>
                             </div>
 
                             <Link
-                                href={route('logout')}
+                                href="/logout"
                                 method="post"
                                 as="button"
                                 className="topnav-logout"
@@ -44,7 +44,7 @@ export default function AppLayout({ children, title }) {
                             </Link>
                         </>
                     ) : (
-                        <Link href={route('login')} className="topnav-login">
+                        <Link href="/login" className="topnav-login">
                             Login
                         </Link>
                     )}
